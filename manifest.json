@@ -2,7 +2,7 @@
   "manifest_version": 3,
   "name": "hotdog",
   "version": "1.0.0",
-  "description": "Extension for detect hotdog",
+  "description": "Extension for detecting hotdogs",
   "icons": {
     "48": "images/icon-48.png",
     "128": "images/icon-128.png"
@@ -15,6 +15,36 @@
     },
     "default_title": "Hotdog",
     "default_popup": "popup.html"
-  }
-
+  },
+  "permissions": [
+    "activeTab",
+    "contextMenus",
+    "storage",
+    "scripting"
+  ],
+  "optional_permissions": [
+    "topSites"
+  ],
+  "host_permissions": [
+    "https://www.developer.chrome.com/*"
+  ],
+  "optional_host_permissions":[
+    "https://*/*",
+    "http://*/*"
+  ],
+  "background": {
+    "service_worker": "background.js",
+    "type": "module"
+  },
+  "content_scripts": [
+    {
+      "matches": ["<all_urls>"],
+      "js": ["content.js"],
+      "type": "module"
+    }
+  ],
+  "web_accessible_resources": [{
+    "matches": ["<all_urls>"],
+    "resources": ["/node_modules/@tensorflow/tfjs/dist/tf.fesm.js"]
+  }]
 }
