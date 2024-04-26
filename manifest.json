@@ -13,8 +13,8 @@
       "24": "images/icon-24.png",
       "32": "images/icon-32.png"
     },
-    "default_title": "Hotdog",
-    "default_popup": "popup.html"
+    "default_title": "Hotdog"
+
   },
   "permissions": [
     "activeTab",
