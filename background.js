@@ -24,47 +24,49 @@ const loadModel = () => {
       console.log('tab id :' + tabId)
       
       // Memuat model secara synchronous
-      loadModel().then(model => {
-        // Memeriksa apakah model telah dimuat dengan sukses sebelum melanjutkan       
+      loadModel().then(model => {      
         for (const imageUrl of images) {
-            getImageDataFromUrl(imageUrl)
-              .then(imageData => {
-                if (imageData) {
-                  console.log(imageUrl);
-                  console.log('ImageData ' + imageCount + ': ', imageData);
-                  const tensorImage = tf.browser.fromPixels(imageData);
-                  const resizedImage = tf.image.resizeBilinear(tensorImage, [299, 299]);
-                  const normalizedImage = resizedImage.toFloat().div(tf.scalar(255));
-                  const expandedImage = normalizedImage.expandDims();
-  
-                  // Lakukan prediksi
-                  // Lakukan prediksi
-                  const predictions = model.predict(expandedImage);
-                  const prediction = predictions.arraySync()[0][0];                    
+          
+          getImageDataFromUrl(imageUrl)
+            .then(imageData => {
+              if (imageData) {
+                console.log(imageUrl);
+                console.log('ImageData ' + imageCount + ': ', imageData);
+                const tensorImage = tf.browser.fromPixels(imageData);
+                const resizedImage = tf.image.resizeBilinear(tensorImage, [299, 299]);
+                const normalizedImage = resizedImage.toFloat().div(tf.scalar(255));
+                const expandedImage = normalizedImage.expandDims();
 
-                  // Mencetak hasil prediksi
-                  if (prediction > 0.7) {
-                      console.log("Class 1");
-                      detectCount += 1; 
-                  } else {
-                      console.log("Class 0");
-                  }
-                  console.log('Probabilitas :', prediction.toFixed(5));
-                  console.log("Terdeteksi positif : ", detectCount)
-                  imageCount += 1;
+                // Lakukan prediksi
+                // Lakukan prediksi
+                const predictions = model.predict(expandedImage);
+                const prediction = predictions.arraySync()[0][0];                    
 
-                  if (detectCount === 3) {
-                      sendResponse({ message: "Images processed", detectCount });
-                      return;
-                  }
-  
+                // Mencetak hasil prediksi
+                if (prediction > 0.7) {
+                    console.log("Class 1");
+                    detectCount += 1; 
                 } else {
-                  console.log('Gagal mengambil ImageData dari URL:', imageUrl);
-                }                
-              })
-              .catch(error => {
-                console.error('Error:', error);
-              });            
+                    console.log("Class 0");
+                }
+                console.log('Probabilitas :', prediction.toFixed(5));
+                console.log("Terdeteksi positif : ", detectCount)
+                imageCount += 1;
+
+                if (detectCount === 4) {
+                    sendResponse({ message: "Images processed", detectCount });;
+                }
+
+              } else {
+                console.log('Gagal mengambil ImageData dari URL:', imageUrl);
+              }                
+            })
+            .catch(error => {
+              console.error('Error:', error);
+            });
+          if (detectCount === 10) { 
+            return; 
+          }   
         }
       });
     }
