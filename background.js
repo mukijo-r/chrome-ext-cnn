@@ -1,88 +1,95 @@
 import * as tf from "/node_modules/@tensorflow/tfjs/dist/tf.fesm.js";
 
 // Load model di luar fungsi
-const loadModel = async () => {
-  try {
-      const model = await tf.loadLayersModel('model/model.json');
-      return model;
-  } catch (error) {
-      console.error('Error loading model:', error);
-      return null;
-  }
-};
-
-// Memproses pesan saat menerima pesan dari content.js
-chrome.runtime.onMessage.addListener(async function(message, sender, sendResponse) {
-  // Memproses pesan
-  if (message.images) {
-    let detectCount = 0;
-    const images = message.images;
-
-    // Memuat model
-    const model = await loadModel();
-
-    // Memeriksa apakah model telah dimuat dengan sukses sebelum melanjutkan
-    if (model) {
+const loadModel = () => {
+    return tf.loadLayersModel('model/model.json')
+      .then(model => {
+        return model;
+      })
+      .catch(error => {
+        console.error('Error loading model:', error);
+        return null;
+      });
+  };
+  
+  // Memproses pesan saat menerima pesan dari content.js
+  chrome.runtime.onMessage.addListener(function(message, sender, sendResponse) { 
+    // Memproses pesan
+    if (message.images) {       
+      console.clear()
+      let imageCount = 0;
+      let detectCount = 0;
+      const tabId = sender.tab.id;
+      const images = message.images;
+      console.log('tab id :' + tabId)
+      
+      // Memuat model secara synchronous
+      loadModel().then(model => {
+        // Memeriksa apakah model telah dimuat dengan sukses sebelum melanjutkan       
         for (const imageUrl of images) {
             getImageDataFromUrl(imageUrl)
-            .then(imageData => {
+              .then(imageData => {
                 if (imageData) {
-                    console.log('ImageData berhasil diambil:', imageData);
-                    const tensorImage = tf.browser.fromPixels(imageData);
-                    const resizedImage = tf.image.resizeBilinear(tensorImage, [299, 299]);
-                    const normalizedImage = resizedImage.toFloat().div(tf.scalar(255));
-                    const expandedImage = normalizedImage.expandDims();
+                  console.log(imageUrl);
+                  console.log('ImageData ' + imageCount + ': ', imageData);
+                  const tensorImage = tf.browser.fromPixels(imageData);
+                  const resizedImage = tf.image.resizeBilinear(tensorImage, [299, 299]);
+                  const normalizedImage = resizedImage.toFloat().div(tf.scalar(255));
+                  const expandedImage = normalizedImage.expandDims();
+  
+                  // Lakukan prediksi
+                  // Lakukan prediksi
+                  const predictions = model.predict(expandedImage);
+                  const prediction = predictions.arraySync()[0][0];                    
 
-                    // Lakukan prediksi
-                    const predictions = model.predict(expandedImage);
-                    const prediction = predictions.arraySync()[0][0];
-                    console.log(imageUrl);
+                  // Mencetak hasil prediksi
+                  if (prediction > 0.7) {
+                      console.log("Class 1");
+                      detectCount += 1; 
+                  } else {
+                      console.log("Class 0");
+                  }
+                  console.log('Probabilitas :', prediction.toFixed(5));
+                  console.log("Terdeteksi positif : ", detectCount)
+                  imageCount += 1;
 
-                    // Mencetak hasil prediksi
-                    if (prediction > 0.7) {
-                        console.log("Class 1");
-                        detectCount += 1;
-                        console.log("Terdeteksi positif : ", detectCount)
-                    } else {
-                        console.log("Class 0");
-                    }
-                    console.log('Probabilitas prediksi:', prediction);
+                  if (detectCount === 3) {
+                      sendResponse({ message: "Images processed", detectCount });
+                      return;
+                  }
+  
                 } else {
-                    console.log('Gagal mengambil ImageData dari URL:', imageUrl);
-                }
-            })
-            .catch(error => {
+                  console.log('Gagal mengambil ImageData dari URL:', imageUrl);
+                }                
+              })
+              .catch(error => {
                 console.error('Error:', error);
-            });
+              });            
         }
-    } else {
-        console.error('Model gagal dimuat, prediksi tidak dapat dilakukan.');
+      });
     }
-  }
-});
+    return true;
+  });
+  
 
-async function getImageDataFromUrl(imageUrl) {
-  try {
-      // Mengambil gambar dari URL menggunakan fetch API
-      const response = await fetch(imageUrl);
-      const blob = await response.blob();
-
-      // Membuat objek ImageData dari blob
-      const imageBitmap = await createImageBitmap(blob);
-      const canvas = new OffscreenCanvas(imageBitmap.width, imageBitmap.height);
-      const context = canvas.getContext('2d');
-      context.drawImage(imageBitmap, 0, 0);
-      const imageData = context.getImageData(0, 0, canvas.width, canvas.height);
-
-      return imageData;
-  } catch (error) {
-      console.error('Error fetching or processing image:', error);
-      return null;
-  }
+function getImageDataFromUrl(imageUrl) {
+  return new Promise((resolve, reject) => {
+    fetch(imageUrl)
+      .then(response => response.blob())
+      .then(blob => createImageBitmap(blob))
+      .then(imageBitmap => {
+        const canvas = new OffscreenCanvas(imageBitmap.width, imageBitmap.height);
+        const context = canvas.getContext('2d');
+        context.drawImage(imageBitmap, 0, 0);
+        const imageData = context.getImageData(0, 0, canvas.width, canvas.height);
+        resolve(imageData);
+      })
+      .catch(error => {
+        console.error('Error fetching or processing image:', error);
+        reject(null);
+      });
+  });
 }
-
-
-
 
 
 

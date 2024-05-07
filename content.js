@@ -7,10 +7,16 @@ window.onload = function() {
   });
   const imageUrls = filteredImages.map(image => image.src);
 
-  chrome.runtime.sendMessage({ images: imageUrls }, function(response) {
-    console.log('Gambar telah dikirim ke background.js');
-  });
+  if (filteredImages.length > 1) {
+    chrome.runtime.sendMessage({ images: imageUrls }, function(response) {
+      console.log('Gambar telah dikirim ke background.js');
+      if (response.message === "Images processed") {        
+        const detectCount = response.detectCount;
+        console.log("objek terdeteksi : " + detectCount);
+      }
+    });
+  } else {
+    console.log('Tidak ada gambar dengan lebar dan panjang 100.');
+  }
+  
 };
-
-
-
