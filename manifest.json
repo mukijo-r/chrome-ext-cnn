@@ -1,8 +1,8 @@
 {
   "manifest_version": 3,
-  "name": "hotdog",
-  "version": "1.0.0",
-  "description": "Extension for detecting hotdogs",
+  "name": "Stop Porn",
+  "version": "1.0.1",
+  "description": "Extension to detect and block pornographic websites from the client side based on the images contained.",
   "icons": {
     "48": "images/icon-48.png",
     "128": "images/icon-128.png"
@@ -14,17 +14,7 @@
       "32": "images/icon-32.png"
     },
     "default_title": "Hotdog"
-
   },
-  "permissions": [
-    "activeTab",
-    "contextMenus",
-    "storage",
-    "scripting"
-  ],
-  "optional_permissions": [
-    "topSites"
-  ],
   "host_permissions": [
     "https://www.developer.chrome.com/*"
   ],
@@ -40,11 +30,12 @@
     {
       "matches": ["<all_urls>"],
       "js": ["content.js"],
-      "type": "module"
+      "type": "module",
+      "run_at": "document_start"
     }
   ],
   "web_accessible_resources": [{
     "matches": ["<all_urls>"],
-    "resources": ["/node_modules/@tensorflow/tfjs/dist/tf.fesm.js"]
+    "resources": ["/node_modules/tf.fesm.js"]
   }]
 }
