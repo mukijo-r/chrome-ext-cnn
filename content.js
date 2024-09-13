@@ -1,12 +1,14 @@
 // Dijalankan saat halaman web telah sepenuhnya dimuat, mengirim pesan ke background.js
-document.addEventListener('DOMContentLoaded', function() {
+window.onload = function() {
   const images = document.getElementsByTagName('img');
-  const filteredImages = Array.from(images).filter((image, index) => {
-      return index < 30 && image.width > 100 && image.height > 100; 
+  const filteredImages = Array.from(images).filter((image) => {
+    return image.width > 100 && image.height > 100;
   });
-  const imageUrls = filteredImages.map(image => image.src);  
 
-  if (filteredImages.length > 1) {
+  const limitedImages = filteredImages.slice(0, 40);
+  const imageUrls = limitedImages.map(image => image.src); 
+
+  if (filteredImages.length > 0) {
     chrome.runtime.sendMessage({ images: imageUrls }, function(response) {
       console.log('Gambar telah dikirim ke background.js');
       if (response.message === "Images processed") {        
@@ -17,9 +19,9 @@ document.addEventListener('DOMContentLoaded', function() {
       }
     });
   } else {
-    console.log('Tidak ada gambar dengan lebar dan panjang 100.');
+    console.log('Tidak ada gambar dengan lebar dan panjang > 100px.');
   }  
-});
+};
 
 // Fungsi CSS
 const generateSTYLES = () => {
@@ -35,13 +37,13 @@ const generateSTYLES = () => {
   }
   body {
       font-family: 'Raleway', sans-serif;
-      background-color: #342643; 
+      background-color: #4C4650; 
       height: 100%;
       padding: 10px;
   }
 
   a {
-    color: #EE4B5E !important;
+    color: #30DF0D !important;
     text-decoration:none;
   }
   a:hover {
@@ -52,25 +54,26 @@ const generateSTYLES = () => {
   .text-wrapper {
       height: 100%;
     display: flex;
+    text-align: center;
     flex-direction: column;
     align-items: center;
     justify-content: center;
   }
 
   .title {
-      font-size: 5em;
-      font-weight: 700;
+      font-size: 40px;
+      font-weight: 600;
       color: #EE4B5E;
   }
 
   .subtitle {
       font-size: 36px;
       text-align: center;
-      font-weight: 700;
+      font-weight: 600;
       color: #1FA9D6;
   }
   .isi {
-      font-size: 18px;
+      font-size: 26px;
       text-align: center;
       margin:30px;
       padding:20px;
@@ -79,11 +82,11 @@ const generateSTYLES = () => {
   .buttons {
       margin: 30px;
           font-weight: 700;
-          border: 2px solid #EE4B5E;
+          border: 2px solid #30DF0D;
           text-decoration: none;
           padding: 15px;
           text-transform: uppercase;
-          color: #EE4B5E;
+          color: #30DF0D;
           border-radius: 26px;
           transition: all 0.2s ease-in-out;
           display: inline-block;
@@ -104,18 +107,18 @@ const generateHTML = () => {
   return `
   <div class="text-wrapper">
     <div class="title" data-content="404">
-      403 - AKSES TERLARANG
+      403 - ACCESS FORBIDEN
     </div>
 
     <div class="subtitle">
-      Anda tidak diijinkan untuk melanjutkan. Kemungkinan halaman yang coba Anda akses mengandung konten pornografi.
+      You don't have permission to open this web page.
     </div>
     <div class="isi">
-      Server web dapat mengembalikan kode status HTTP 403 Terlarang sebagai respons terhadap permintaan dari klien untuk halaman web atau sumber daya untuk menunjukkan bahwa server dapat dijangkau dan memahami permintaan tersebut, namun menolak untuk mengambil tindakan lebih lanjut. Respons kode status 403 adalah hasil dari server web yang dikonfigurasi untuk menolak akses, karena alasan tertentu, ke sumber daya yang diminta oleh klien.
+      The browser can't provide additional entry because the web page you're trying to open is a resource that you're not allowed to access.
     </div>
 
     <div class="buttons">
-        <a class="button" href="about:blank">KEMBALI</a>
+        <a class="button" href="about:blank">HOME</a>
     </div>
 </div>
    `;
