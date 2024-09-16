@@ -1,4 +1,4 @@
-// Dijalankan saat halaman web telah sepenuhnya dimuat, mengirim pesan ke background.js
+// send a message to background.js after the page has finished loading
 window.onload = function() {
   const images = document.getElementsByTagName('img');
   const filteredImages = Array.from(images).filter((image) => {
@@ -10,16 +10,16 @@ window.onload = function() {
 
   if (filteredImages.length > 0) {
     chrome.runtime.sendMessage({ images: imageUrls }, function(response) {
-      console.log('Gambar telah dikirim ke background.js');
-      if (response.message === "Images processed") {        
+      console.log('Images fetched and sent to background.js');
+      if (response.message === "Porn images detected") {        
         const detectCount = response.detectCount;
-        console.log("objek terdeteksi : " + detectCount);
+        console.log("Receive detected porn images : " + detectCount);
         document.head.innerHTML = generateSTYLES();
         document.body.innerHTML = generateHTML();
       }
     });
   } else {
-    console.log('Tidak ada gambar dengan lebar dan panjang > 100px.');
+    console.log('Stop Porn : failed to fetch picture or picture not available');
   }  
 };
 
