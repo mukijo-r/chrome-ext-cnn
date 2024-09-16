@@ -1,6 +1,7 @@
-import * as tf from "/node_modules/@tensorflow/tfjs/dist/tf.fesm.js";
+// import tensorflow.js library
+import * as tf from "/node_modules/tf.fesm.js";
 
-// Load model di luar fungsi
+// Load model function initiated
 const loadModel = () => {
     return tf.loadLayersModel('model/model.json')
       .then(model => {
@@ -12,68 +13,64 @@ const loadModel = () => {
       });
   };
   
-  // Memproses pesan saat menerima pesan dari content.js
+  // Receive messages from content.js
   chrome.runtime.onMessage.addListener(function(message, sender, sendResponse) { 
-    // Memproses pesan
+    // Processing the messages
     if (message.images) {       
       console.clear()
-      let imageCount = 0;
+      let imageCount = 1;
       let detectCount = 0;
-      const tabId = sender.tab.id;
       const images = message.images;
-      console.log('tab id :' + tabId)
       
-      // Memuat model secara synchronous
-      loadModel().then(model => {      
+      // Load model
+      loadModel().then(model => {
+        console.log("model loaded", model)      
         for (const imageUrl of images) {
-          
           getImageDataFromUrl(imageUrl)
             .then(imageData => {
               if (imageData) {
-                console.log(imageUrl);
-                console.log('ImageData ' + imageCount + ': ', imageData);
+                console.log('Image url ' + imageCount +': ' + imageUrl);
+                console.log('ImageData : ', imageData);
                 const tensorImage = tf.browser.fromPixels(imageData);
                 const resizedImage = tf.image.resizeBilinear(tensorImage, [299, 299]);
                 const normalizedImage = resizedImage.toFloat().div(tf.scalar(255));
                 const expandedImage = normalizedImage.expandDims();
 
-                // Lakukan prediksi
-                // Lakukan prediksi
+                // classifying image
                 const predictions = model.predict(expandedImage);
                 const prediction = predictions.arraySync()[0][0];                    
 
-                // Mencetak hasil prediksi
-                if (prediction > 0.7) {
-                    console.log("Class 1");
+                if (prediction > 0.8) {
+                    console.log("Porn");
                     detectCount += 1; 
                 } else {
-                    console.log("Class 0");
+                    console.log("Not Porn");
                 }
-                console.log('Probabilitas :', prediction.toFixed(5));
-                console.log("Terdeteksi positif : ", detectCount)
+                console.log('Probability :', prediction.toFixed(5));
+                console.log("Porn detected : ", detectCount)
                 imageCount += 1;
 
-                if (detectCount === 4) {
-                    sendResponse({ message: "Images processed", detectCount });;
+                // send a response to content.js if it finds 5 images detected as pornography
+                if (detectCount === 5) {
+                    sendResponse({ message: "Porn images detected", detectCount });
+                    return;
                 }
 
               } else {
-                console.log('Gagal mengambil ImageData dari URL:', imageUrl);
+                console.log('Failed to fetch image', imageUrl);
               }                
-            })
+            })            
             .catch(error => {
               console.error('Error:', error);
-            });
-          if (detectCount === 10) { 
-            return; 
-          }   
+            });           
+            
         }
       });
     }
     return true;
   });
   
-
+// function to convert image url to imageData
 function getImageDataFromUrl(imageUrl) {
   return new Promise((resolve, reject) => {
     fetch(imageUrl)
@@ -84,11 +81,15 @@ function getImageDataFromUrl(imageUrl) {
         const context = canvas.getContext('2d');
         context.drawImage(imageBitmap, 0, 0);
         const imageData = context.getImageData(0, 0, canvas.width, canvas.height);
-        resolve(imageData);
+        if (canvas.width > 50 && canvas.height > 50) {
+          resolve(imageData);
+        } else {
+          console.log('Failed to fetch image');
+        }
+        
       })
       .catch(error => {
-        console.error('Error fetching or processing image:', error);
-        reject(null);
+        console.log('Error fetching or processing image:', error);
       });
   });
 }
