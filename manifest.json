@@ -15,9 +15,6 @@
     },
     "default_title": "Hotdog"
   },
-  "host_permissions": [
-    "https://www.developer.chrome.com/*"
-  ],
   "optional_host_permissions":[
     "https://*/*",
     "http://*/*"
